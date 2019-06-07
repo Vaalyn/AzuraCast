@@ -4,8 +4,8 @@ namespace App\Entity\Repository;
 use App\Entity;
 use App\Radio\Filesystem;
 use Azura\Doctrine\Repository;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping;
+use GuzzleHttp\Client;
 
 class StationMediaRepository extends Repository
 {
@@ -136,6 +136,8 @@ class StationMediaRepository extends Repository
      */
     public function loadFromFile(Entity\StationMedia $media, $file_path = null): void
     {
+        $start_time = microtime(true);
+
         // Load metadata from supported files.
         $id3 = new \getID3();
  
@@ -179,6 +181,9 @@ class StationMediaRepository extends Repository
             $picture = $file_info['comments']['picture'][0];
             $this->writeAlbumArt($media, $picture['data']);
         }
+
+        $end_time = microtime(true);
+        file_put_contents(__DIR__ . '/debug.txt', ($end_time - $start_time) . PHP_EOL, FILE_APPEND);
 
         // Attempt to derive title and artist from filename.
         if (empty($media->getTitle())) {
@@ -278,43 +283,27 @@ class StationMediaRepository extends Repository
      */
     public function writeAlbumArt(Entity\StationMedia $media, $raw_art_string): bool
     {
-        $source_gd_image = imagecreatefromstring($raw_art_string);
+        $options = [
+            'base_uri' => 'azuracast_imaginary_1:9000',
+            'http_errors' => false
+        ];
 
-        if (!is_resource($source_gd_image)) {
-            return false;
-        }
+        $httpClient = new Client($options);
 
-        // Crop the raw art to a 1200x1200 artboard.
-        $dest_max_width = 1200;
-        $dest_max_height = 1200;
+        $response = $httpClient->post('/fit', [
+            'headers'  => ['Content-Type' => 'image/jpeg'],
+            'body' => $raw_art_string,
+            'query' => [
+                'width' => 1200,
+                'height' => 1200,
+                'stripmeta' => true,
+                'noprofile' => true,
+                'colorspace' => 'srgb',
+                'type' => 'jpeg'
+            ]
+        ]);
 
-        $source_image_width = imagesx($source_gd_image);
-        $source_image_height = imagesy($source_gd_image);
-
-        $source_aspect_ratio = $source_image_width / $source_image_height;
-        $thumbnail_aspect_ratio = $dest_max_width / $dest_max_height;
-
-        if ($source_image_width <= $dest_max_width && $source_image_height <= $dest_max_height) {
-            $thumbnail_image_width = $source_image_width;
-            $thumbnail_image_height = $source_image_height;
-        } elseif ($thumbnail_aspect_ratio > $source_aspect_ratio) {
-            $thumbnail_image_width = (int) ($dest_max_height * $source_aspect_ratio);
-            $thumbnail_image_height = $dest_max_height;
-        } else {
-            $thumbnail_image_width = $dest_max_width;
-            $thumbnail_image_height = (int) ($dest_max_width / $source_aspect_ratio);
-        }
-
-        $thumbnail_gd_image = imagecreatetruecolor($thumbnail_image_width, $thumbnail_image_height);
-        imagecopyresampled($thumbnail_gd_image, $source_gd_image, 0, 0, 0, 0, $thumbnail_image_width, $thumbnail_image_height, $source_image_width, $source_image_height);
-
-        ob_start();
-        imagejpeg($thumbnail_gd_image, NULL, 90);
-        $album_art = ob_get_contents();
-        ob_end_clean();
-
-        imagedestroy($source_gd_image);
-        imagedestroy($thumbnail_gd_image);
+        $album_art = $response->getBody()->getContents();
 
         $album_art_path = $media->getArtPath();
         $fs = $this->filesystem->getForStation($media->getStation());
