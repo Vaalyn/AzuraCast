@@ -105,6 +105,12 @@ services:
     restart: always
     logging: *default-logging
 
+  imaginary:
+    image: h2non/imaginary:latest
+    environment:
+      PORT: 9000
+    restart: always
+
 volumes:
   db_data: {}
   influx_data: {}
