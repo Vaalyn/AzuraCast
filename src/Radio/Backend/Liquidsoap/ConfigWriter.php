@@ -293,14 +293,11 @@ class ConfigWriter implements EventSubscriberInterface
                     default:
                         $remote_url = $playlist->getRemoteUrl();
                         if (null !== $remote_url) {
-                            $remote_url_scheme = parse_url($remote_url, PHP_URL_SCHEME);
-                            $remote_url_function = ('https' === $remote_url_scheme) ? 'input.https' : 'input.http';
-
                             $buffer = $playlist->getRemoteBuffer();
                             $buffer = ($buffer < 1) ? Entity\StationPlaylist::DEFAULT_REMOTE_BUFFER : $buffer;
 
-                            $playlistConfigLines[] = $playlistVarName . ' = mksafe(' . $remote_url_function
-                            . '(max=' . $buffer . '., "' . self::cleanUpString($remote_url) . '"))';
+                            $playlistConfigLines[] = $playlistVarName . ' = mksafe(input.http(max='
+                                . $buffer . '., "' . self::cleanUpString($remote_url) . '"))';
                         }
                         break;
                 }
