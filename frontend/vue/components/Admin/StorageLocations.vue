@@ -1,104 +1,106 @@
 <template>
-    <section
-        class="card"
-        role="region"
-        aria-labelledby="hdr_storage_locations"
-    >
-        <b-card-header header-bg-variant="primary-dark">
-            <h2
-                id="hdr_storage_locations"
-                class="card-title"
-            >
-                {{ $gettext('Storage Locations') }}
-            </h2>
-        </b-card-header>
-        <b-tabs
-            pills
-            card
-            lazy
+    <div>
+        <section
+            class="card"
+            role="region"
+            aria-labelledby="hdr_storage_locations"
         >
-            <b-tab
-                v-for="tab in tabs"
-                :key="tab.type"
-                :active="activeType === tab.type"
-                :title="tab.title"
-                no-body
-                @click="setType(tab.type)"
-            />
-        </b-tabs>
-
-        <b-card-body body-class="card-padding-sm">
-            <b-button
-                variant="outline-primary"
-                @click.prevent="doCreate"
+            <b-card-header header-bg-variant="primary-dark">
+                <h2
+                    id="hdr_storage_locations"
+                    class="card-title"
+                >
+                    {{ $gettext('Storage Locations') }}
+                </h2>
+            </b-card-header>
+            <b-tabs
+                pills
+                card
+                lazy
             >
-                <icon icon="add" />
-                {{ $gettext('Add Storage Location') }}
-            </b-button>
-        </b-card-body>
+                <b-tab
+                    v-for="tab in tabs"
+                    :key="tab.type"
+                    :active="activeType === tab.type"
+                    :title="tab.title"
+                    no-body
+                    @click="setType(tab.type)"
+                />
+            </b-tabs>
 
-        <data-table
-            id="admin_storage_locations"
-            ref="$datatable"
-            :show-toolbar="false"
-            :fields="fields"
-            :responsive="false"
-            :api-url="listUrlForType"
-        >
-            <template #cell(actions)="row">
-                <b-button-group size="sm">
-                    <b-button
-                        size="sm"
-                        variant="primary"
-                        @click.prevent="doEdit(row.item.links.self)"
-                    >
-                        {{ $gettext('Edit') }}
-                    </b-button>
-                    <b-button
-                        size="sm"
-                        variant="danger"
-                        @click.prevent="doDelete(row.item.links.self)"
-                    >
-                        {{ $gettext('Delete') }}
-                    </b-button>
-                </b-button-group>
-            </template>
-            <template #cell(adapter)="row">
-                <h5 class="m-0">
-                    {{ getAdapterName(row.item.adapter) }}
-                </h5>
-                <p class="card-text">
-                    {{ row.item.uri }}
-                </p>
-            </template>
-            <template #cell(space)="row">
-                <template v-if="row.item.storageAvailable">
-                    <b-progress
-                        :value="row.item.storageUsedPercent"
-                        show-progress
-                        height="15px"
-                        class="mb-1"
-                        :variant="getProgressVariant(row.item.storageUsedPercent)"
-                    />
+            <b-card-body body-class="card-padding-sm">
+                <b-button
+                    variant="outline-primary"
+                    @click.prevent="doCreate"
+                >
+                    <icon icon="add" />
+                    {{ $gettext('Add Storage Location') }}
+                </b-button>
+            </b-card-body>
 
-                    {{ getSpaceUsed(row.item) }}
+            <data-table
+                id="admin_storage_locations"
+                ref="$datatable"
+                :show-toolbar="false"
+                :fields="fields"
+                :responsive="false"
+                :api-url="listUrlForType"
+            >
+                <template #cell(actions)="row">
+                    <b-button-group size="sm">
+                        <b-button
+                            size="sm"
+                            variant="primary"
+                            @click.prevent="doEdit(row.item.links.self)"
+                        >
+                            {{ $gettext('Edit') }}
+                        </b-button>
+                        <b-button
+                            size="sm"
+                            variant="danger"
+                            @click.prevent="doDelete(row.item.links.self)"
+                        >
+                            {{ $gettext('Delete') }}
+                        </b-button>
+                    </b-button-group>
                 </template>
-                <template v-else>
-                    {{ getSpaceUsed(row.item) }}
+                <template #cell(adapter)="row">
+                    <h5 class="m-0">
+                        {{ getAdapterName(row.item.adapter) }}
+                    </h5>
+                    <p class="card-text">
+                        {{ row.item.uri }}
+                    </p>
                 </template>
-            </template>
-            <template #cell(stations)="row">
-                {{ row.item.stations.join(', ') }}
-            </template>
-        </data-table>
-    </section>
+                <template #cell(space)="row">
+                    <template v-if="row.item.storageAvailable">
+                        <b-progress
+                            :value="row.item.storageUsedPercent"
+                            show-progress
+                            height="15px"
+                            class="mb-1"
+                            :variant="getProgressVariant(row.item.storageUsedPercent)"
+                        />
 
-    <edit-modal
-        ref="$editModal"
-        :create-url="listUrl"
-        :type="activeType"
-        @relist="relist"
-    />
+                        {{ getSpaceUsed(row.item) }}
+                    </template>
+                    <template v-else>
+                        {{ getSpaceUsed(row.item) }}
+                    </template>
+                </template>
+                <template #cell(stations)="row">
+                    {{ row.item.stations.join(', ') }}
+                </template>
+            </data-table>
+        </section>
+
+        <edit-modal
+            ref="$editModal"
+            :create-url="listUrl"
+            :type="activeType"
+            @relist="relist"
+        />
+    </div>
 </template>
 
 <script setup>
@@ -176,6 +178,9 @@ const getAdapterName = (adapter) => {
 
         case 'sftp':
             return $gettext('Remote: SFTP');
+
+        case 'webdav':
+            return $gettext('Remote: WebDAV');
     }
 };
 

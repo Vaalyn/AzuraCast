@@ -47,6 +47,7 @@
     "league/csv": "^9.6",
     "league/flysystem-aws-s3-v3": "^3.0",
     "league/flysystem-sftp-v3": "^3.0",
+    "league/flysystem-webdav": "^3.13",
     "league/mime-type-detection": "^1.7",
     "league/oauth2-client": "^2.6",
     "league/plates": "^3.1",

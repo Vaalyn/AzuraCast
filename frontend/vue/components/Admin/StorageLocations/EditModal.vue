@@ -65,7 +65,10 @@ const {
             'sftpUsername': {},
             'sftpPassword': {},
             'sftpPrivateKey': {},
-            'sftpPrivateKeyPassPhrase': {}
+            'sftpPrivateKeyPassPhrase': {},
+            'webDavBaseUri': {},
+            'webDavUsername': {},
+            'webDavPassword': {},
         };
 
         switch (formRef.value.adapter) {
@@ -91,6 +94,12 @@ const {
                 validationRules.sftpPort = {required};
                 validationRules.sftpUsername = {required};
                 break;
+
+            case 'webdav':
+                validationRules.webDavBaseUri = {required};
+                validationRules.webDavUsername = {required};
+                validationRules.webDavPassword = {required};
+                break;
         }
 
         return validationRules;
@@ -113,6 +122,9 @@ const {
         'sftpPassword': null,
         'sftpPrivateKey': null,
         'sftpPrivateKeyPassPhrase': null,
+        'webDavBaseUri': null,
+        'webDavUsername': null,
+        'webDavPassword': null,
         'storageQuota': ''
     },
     {

@@ -9,6 +9,7 @@ use App\Entity\StorageLocationAdapter\LocalStorageLocationAdapter;
 use App\Entity\StorageLocationAdapter\S3StorageLocationAdapter;
 use App\Entity\StorageLocationAdapter\SftpStorageLocationAdapter;
 use App\Entity\StorageLocationAdapter\StorageLocationAdapterInterface;
+use App\Entity\StorageLocationAdapter\WebDavStorageLocationAdapter;
 
 enum StorageLocationAdapters: string
 {
@@ -16,6 +17,7 @@ enum StorageLocationAdapters: string
     case S3 = 's3';
     case Dropbox = 'dropbox';
     case Sftp = 'sftp';
+    case WebDav = 'webdav';
 
     public function isLocal(): bool
     {
@@ -29,6 +31,7 @@ enum StorageLocationAdapters: string
             self::S3 => 'S3',
             self::Dropbox => 'Dropbox',
             self::Sftp => 'SFTP',
+            self::WebDav => 'WebDAV',
         };
     }
 
@@ -41,7 +44,8 @@ enum StorageLocationAdapters: string
             self::Local => LocalStorageLocationAdapter::class,
             self::S3 => S3StorageLocationAdapter::class,
             self::Dropbox => DropboxStorageLocationAdapter::class,
-            self::Sftp => SftpStorageLocationAdapter::class
+            self::Sftp => SftpStorageLocationAdapter::class,
+            self::WebDav => WebDavStorageLocationAdapter::class
         };
     }
 }

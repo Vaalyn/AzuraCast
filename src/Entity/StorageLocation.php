@@ -87,6 +87,15 @@ class StorageLocation implements Stringable, IdentifiableEntityInterface
     #[ORM\Column(name: 'sftp_private_key_pass_phrase', length: 255, nullable: true)]
     protected ?string $sftpPrivateKeyPassPhrase = null;
 
+    #[ORM\Column(name: 'webdav_base_uri', length: 255, nullable: true)]
+    protected ?string $webDavBaseUri = null;
+
+    #[ORM\Column(name: 'webdav_username', length: 255, nullable: true)]
+    protected ?string $webDavUsername = null;
+
+    #[ORM\Column(name: 'webdav_password', length: 255, nullable: true)]
+    protected ?string $webDavPassword = null;
+
     #[ORM\Column(name: 'storage_quota', type: 'bigint', nullable: true)]
     protected ?string $storageQuota = null;
 
@@ -305,6 +314,36 @@ class StorageLocation implements Stringable, IdentifiableEntityInterface
     public function setSftpPrivateKeyPassPhrase(?string $sftpPrivateKeyPassPhrase): void
     {
         $this->sftpPrivateKeyPassPhrase = $sftpPrivateKeyPassPhrase;
+    }
+
+    public function getWebDavBaseUri(): ?string
+    {
+        return $this->webDavBaseUri;
+    }
+
+    public function setWebDavBaseUri(?string $webDavBaseUri): void
+    {
+        $this->webDavBaseUri = $webDavBaseUri;
+    }
+
+    public function getWebDavUsername(): ?string
+    {
+        return $this->webDavUsername;
+    }
+
+    public function setWebDavUsername(?string $webDavUsername): void
+    {
+        $this->webDavUsername = $webDavUsername;
+    }
+
+    public function getWebDavPassword(): ?string
+    {
+        return $this->webDavPassword;
+    }
+
+    public function setWebDavPassword(?string $webDavPassword): void
+    {
+        $this->webDavPassword = $webDavPassword;
     }
 
     public function isLocal(): bool

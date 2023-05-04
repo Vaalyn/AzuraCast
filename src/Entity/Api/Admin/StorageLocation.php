@@ -126,6 +126,24 @@ final class StorageLocation
     )]
     public ?string $sftpPrivateKeyPassPhrase = null;
 
+    #[OA\Property(
+        description: 'The base URI for WebDAV adapters',
+        example: 'https://example.com/dav/files/example'
+    )]
+    public ?string $webDavBaseUri = null;
+
+    #[OA\Property(
+        description: 'The username for WebDAV adapters',
+        example: 'root'
+    )]
+    public ?string $webDavUsername = null;
+
+    #[OA\Property(
+        description: 'The password for WebDAV adapters',
+        example: 'abc123'
+    )]
+    public ?string $webDavPassword = null;
+
     #[OA\Property(example: '50 GB')]
     public ?string $storageQuota = null;
 
