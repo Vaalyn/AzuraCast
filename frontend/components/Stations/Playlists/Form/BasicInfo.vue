@@ -115,6 +115,15 @@
                         radio
                         :label="$gettext('Song Playback Order')"
                     />
+
+                    <form-group-checkbox
+                        v-if="form.order !== 'random'"
+                        id="form_edit_preserve_queue_on_restart"
+                        class="col-md-6"
+                        :field="r$.preserve_queue_on_restart"
+                        :label="$gettext('Keep Queue on Restart')"
+                        :description="$gettext('Enable this setting to prevent the playlists internal queue from being reset on station restarts or configuration rewrites.')"
+                    />
                 </div>
 
                 <form-fieldset v-show="form.type === 'default'">
@@ -228,6 +237,15 @@
                         :field="r$.avoid_duplicates"
                         :label="$gettext('Avoid Duplicate Artists/Titles')"
                         :description="$gettext('Whether the AutoDJ should attempt to avoid duplicate artists and track titles across all member playlists in this group.')"
+                    />
+
+                    <form-group-checkbox
+                        v-if="form.order !== 'random'"
+                        id="form_edit_preserve_queue_on_restart"
+                        class="col-md-6"
+                        :field="r$.preserve_queue_on_restart"
+                        :label="$gettext('Keep Queue on Restart')"
+                        :description="$gettext('Enable this setting to prevent the playlists internal queue from being reset on station restarts or configuration rewrites.')"
                     />
                 </div>
 

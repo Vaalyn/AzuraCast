@@ -336,18 +336,6 @@ final class StationPlaylistMediaRepository extends Repository
         $this->em->flush();
     }
 
-    public function resetAllQueues(Station $station): void
-    {
-        $now = Time::nowUtc();
-
-        foreach ($station->playlists as $playlist) {
-            if (PlaylistSources::Songs !== $playlist->source) {
-                continue;
-            }
-
-            $this->resetQueue($playlist, $now);
-        }
-    }
 
     /**
      * @return StationPlaylistQueue[]

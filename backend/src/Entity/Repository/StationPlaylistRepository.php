@@ -21,6 +21,11 @@ final class StationPlaylistRepository extends AbstractStationBasedRepository
 {
     protected string $entityClass = StationPlaylist::class;
 
+    public function __construct(
+        private readonly StationPlaylistMediaRepository $spmRepo
+    ) {
+    }
+
     /**
      * @return StationPlaylist[]
      */
@@ -137,6 +142,27 @@ final class StationPlaylistRepository extends AbstractStationBasedRepository
             ->where('spg.playlist_group = :playlistGroup')
             ->andWhere('sp.is_enabled = 1')
             ->setParameter('playlistGroup', $playlist);
+    }
+
+    public function resetAllQueues(Station $station): void
+    {
+        $now = Time::nowUtc();
+        $preserveSequential = $station->backend_config->preserve_sequential_queues_on_restart;
+
+        foreach ($station->playlists as $playlist) {
+            if (
+                $playlist->preserve_queue_on_restart
+                || ($preserveSequential && $playlist->order === PlaylistOrders::Sequential)
+            ) {
+                continue;
+            }
+
+            match ($playlist->source) {
+                PlaylistSources::Songs => $this->spmRepo->resetQueue($playlist, $now),
+                PlaylistSources::Playlists => $this->resetPlaylistGroupQueue($playlist, $now),
+                default => null,
+            };
+        }
     }
 
     /**
