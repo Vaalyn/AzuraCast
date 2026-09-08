@@ -9,6 +9,7 @@ use App\Container\EntityManagerAwareTrait;
 use App\Container\LoggerAwareTrait;
 use App\Entity\Repository\StationQueueRepository;
 use App\Entity\Station;
+use App\Entity\StationPlaylistMedia;
 use App\Entity\StationQueue;
 use App\Event\Radio\BuildQueue;
 use App\Utilities\Time;
@@ -82,6 +83,7 @@ final class Queue
                 }
             } else {
                 if (!$this->isQueueRowStillValid($queueRow, $expectedPlayTime)) {
+                    $this->restorePlaylistQueueSlot($queueRow);
                     $this->em->remove($queueRow);
                     continue;
                 }
@@ -263,5 +265,26 @@ final class Queue
                 $expectedPlayTime,
                 true
             );
+    }
+
+    /**
+     * Re-queue the playlist media of a queue row that is dropped before it played.
+     */
+    private function restorePlaylistQueueSlot(StationQueue $queueRow): void
+    {
+        $playlist = $queueRow->playlist;
+        $media = $queueRow->media;
+
+        if ($playlist === null || $media === null) {
+            return;
+        }
+
+        $spm = $this->em->getRepository(StationPlaylistMedia::class)
+            ->findOneBy(['playlist' => $playlist, 'media' => $media]);
+
+        if ($spm instanceof StationPlaylistMedia) {
+            $spm->is_queued = true;
+            $this->em->persist($spm);
+        }
     }
 }
