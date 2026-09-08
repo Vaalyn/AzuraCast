@@ -23,9 +23,9 @@ final class PlaylistQueueResetOnRestartCest extends CestAbstract
     /**
      * @before setupComplete
      */
-    public function resetsEverythingByDefault(FunctionalTester $I): void
+    public function preservesSequentialByDefault(FunctionalTester $I): void
     {
-        $I->wantTo('Reset every playlist and playlist group queue on restart when no opt-out is configured.');
+        $I->wantTo('Keep sequential playlist and group queues on restart by default.');
 
         $media = $this->uploadTestSong();
         $sequential = $this->seedPlaylist($media, 'Sequential', PlaylistOrders::Sequential, false);
@@ -36,32 +36,9 @@ final class PlaylistQueueResetOnRestartCest extends CestAbstract
 
         $now = $this->initializeConfiguration();
 
-        $this->assertQueueReset($I, $sequential, $now);
-        $this->assertQueueReset($I, $shuffle, $now);
-        $this->assertQueueResetAt($I, $random, $now);
-        $this->assertGroupQueueReset($I, $sequentialGroup, $now);
-        $this->assertGroupQueueReset($I, $shuffleGroup, $now);
-    }
-
-    /**
-     * @before setupComplete
-     */
-    public function stationFlagPreservesSequentialOnly(FunctionalTester $I): void
-    {
-        $I->wantTo('Keep only sequential playlist queues when the station-level flag is set.');
-
-        $this->setStationFlag(true);
-
-        $media = $this->uploadTestSong();
-        $sequential = $this->seedPlaylist($media, 'Sequential', PlaylistOrders::Sequential, false);
-        $shuffle = $this->seedPlaylist($media, 'Shuffle', PlaylistOrders::Shuffle, false);
-        $sequentialGroup = $this->seedGroup($shuffle, 'Sequential Group', PlaylistOrders::Sequential, false);
-        $shuffleGroup = $this->seedGroup($shuffle, 'Shuffle Group', PlaylistOrders::Shuffle, false);
-
-        $now = $this->initializeConfiguration();
-
         $this->assertQueuePreserved($I, $sequential);
         $this->assertQueueReset($I, $shuffle, $now);
+        $this->assertQueueResetAt($I, $random, $now);
         $this->assertGroupQueuePreserved($I, $sequentialGroup);
         $this->assertGroupQueueReset($I, $shuffleGroup, $now);
     }
@@ -90,11 +67,11 @@ final class PlaylistQueueResetOnRestartCest extends CestAbstract
     /**
      * @before setupComplete
      */
-    public function bothFlagsCombineAsUnion(FunctionalTester $I): void
+    public function stationFlagResetsSequentialUnlessPlaylistOptsOut(FunctionalTester $I): void
     {
-        $I->wantTo('Skip a playlist when either the station flag or the playlist flag applies.');
+        $I->wantTo('Reset sequential queues when the station flag is set, except for playlists that opt out.');
 
-        $this->setStationFlag(true);
+        $this->setResetSequentialFlag(true);
 
         $media = $this->uploadTestSong();
         $sequential = $this->seedPlaylist($media, 'Sequential', PlaylistOrders::Sequential, false);
@@ -113,22 +90,22 @@ final class PlaylistQueueResetOnRestartCest extends CestAbstract
 
         $now = $this->initializeConfiguration();
 
-        $this->assertQueuePreserved($I, $sequential);
+        $this->assertQueueReset($I, $sequential, $now);
         $this->assertQueuePreserved($I, $sequentialPreserved);
         $this->assertQueuePreserved($I, $shufflePreserved);
         $this->assertQueueReset($I, $shuffle, $now);
-        $this->assertGroupQueuePreserved($I, $sequentialGroup);
+        $this->assertGroupQueueReset($I, $sequentialGroup, $now);
         $this->assertGroupQueuePreserved($I, $sequentialGroupPreserved);
         $this->assertGroupQueuePreserved($I, $shuffleGroupPreserved);
         $this->assertGroupQueueReset($I, $shuffleGroup, $now);
     }
 
-    private function setStationFlag(bool $value): void
+    private function setResetSequentialFlag(bool $value): void
     {
         $station = $this->getTestStation();
 
         $backendConfig = $station->backend_config;
-        $backendConfig->preserve_sequential_queues_on_restart = $value;
+        $backendConfig->reset_sequential_queues_on_restart = $value;
         $station->backend_config = $backendConfig;
 
         $this->em->persist($station);

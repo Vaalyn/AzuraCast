@@ -10053,8 +10053,8 @@ components:
           type: integer
         use_manual_autodj:
           type: boolean
-        preserve_sequential_queues_on_restart:
-          description: 'Prevent reset of sequential playlists internal queue when the station is restarted or configuration is rewritten.'
+        reset_sequential_queues_on_restart:
+          description: 'Reset the internal queue of sequential playlists when the station is restarted or its configuration is rewritten.'
           type: boolean
           example: false
         autodj_queue_length:

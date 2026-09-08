@@ -2450,10 +2450,10 @@ export interface StationBackendConfiguration {
     record_streams_bitrate?: number;
     use_manual_autodj?: boolean;
     /**
-     * Prevent reset of sequential playlists internal queue when the station is restarted or configuration is rewritten.
+     * Reset the internal queue of sequential playlists when the station is restarted or its configuration is rewritten.
      * @example false
      */
-    preserve_sequential_queues_on_restart?: boolean;
+    reset_sequential_queues_on_restart?: boolean;
     autodj_queue_length?: number;
     dj_mount_point?: string;
     dj_buffer?: number;

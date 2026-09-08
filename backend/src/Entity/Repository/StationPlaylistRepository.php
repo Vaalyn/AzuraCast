@@ -147,12 +147,12 @@ final class StationPlaylistRepository extends AbstractStationBasedRepository
     public function resetAllQueues(Station $station): void
     {
         $now = Time::nowUtc();
-        $preserveSequential = $station->backend_config->preserve_sequential_queues_on_restart;
+        $resetSequential = $station->backend_config->reset_sequential_queues_on_restart;
 
         foreach ($station->playlists as $playlist) {
             if (
                 $playlist->preserve_queue_on_restart
-                || ($preserveSequential && $playlist->order === PlaylistOrders::Sequential)
+                || (!$resetSequential && $playlist->order === PlaylistOrders::Sequential)
             ) {
                 continue;
             }
