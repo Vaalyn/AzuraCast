@@ -31,8 +31,8 @@ final class LiquidsoapFeedbackCest extends CestAbstract
         $remaining = $this->addMedia($playlist, 'remaining.mp3');
 
         $this->sendFeedback($I, [
-            'media_id' => (string)$played->id,
-            'playlist_id' => (string)$playlist->id,
+            'media_id' => (string) $played->id,
+            'playlist_id' => (string) $playlist->id,
         ]);
 
         $spm = $this->findPlaylistMedia($playlist, $played);
@@ -54,8 +54,8 @@ final class LiquidsoapFeedbackCest extends CestAbstract
         $media = $this->addMedia($playlist, 'only.mp3');
 
         $this->sendFeedback($I, [
-            'media_id' => (string)$media->id,
-            'playlist_id' => (string)$playlist->id,
+            'media_id' => (string) $media->id,
+            'playlist_id' => (string) $playlist->id,
         ]);
 
         $I->assertTrue($this->findPlaylistMedia($playlist, $media)->is_queued);
@@ -84,9 +84,9 @@ final class LiquidsoapFeedbackCest extends CestAbstract
         $this->em->flush();
 
         $this->sendFeedback($I, [
-            'media_id' => (string)$media->id,
-            'playlist_id' => (string)$playlist->id,
-            'sq_id' => (string)$row->id,
+            'media_id' => (string) $media->id,
+            'playlist_id' => (string) $playlist->id,
+            'sq_id' => (string) $row->id,
         ]);
 
         $spm = $this->findPlaylistMedia($playlist, $media);
