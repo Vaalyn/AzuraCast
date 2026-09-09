@@ -137,6 +137,11 @@ final class FeedbackCommand extends AbstractCommand
                 if ($spm !== null) {
                     $spm->played();
                     $this->em->persist($spm);
+                    $this->em->flush();
+
+                    if ($this->spmRepo->isQueueEmpty($playlist)) {
+                        $this->spmRepo->resetQueue($playlist);
+                    }
                 }
             }
         }

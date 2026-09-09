@@ -27,16 +27,39 @@ final class LiquidsoapFeedbackCest extends CestAbstract
         $I->wantTo('Mark playlist media as played when Liquidsoap reports a track without a queue row.');
 
         $playlist = $this->seedPlaylist();
-        $media = $this->addMedia($playlist);
+        $played = $this->addMedia($playlist, 'played.mp3');
+        $remaining = $this->addMedia($playlist, 'remaining.mp3');
+
+        $this->sendFeedback($I, [
+            'media_id' => (string)$played->id,
+            'playlist_id' => (string)$playlist->id,
+        ]);
+
+        $spm = $this->findPlaylistMedia($playlist, $played);
+
+        $I->assertFalse($spm->is_queued);
+        $I->assertGreaterThan(0, $spm->last_played);
+        $I->assertTrue($this->findPlaylistMedia($playlist, $remaining)->is_queued);
+        $I->assertNull($this->em->refetch($playlist)->queue_reset_at);
+    }
+
+    /**
+     * @before setupComplete
+     */
+    public function exhaustedPlaylistIsResetAfterFallbackPlay(FunctionalTester $I): void
+    {
+        $I->wantTo('Reset the playlist queue once Liquidsoap has played its last queued track.');
+
+        $playlist = $this->seedPlaylist();
+        $media = $this->addMedia($playlist, 'only.mp3');
 
         $this->sendFeedback($I, [
             'media_id' => (string)$media->id,
             'playlist_id' => (string)$playlist->id,
         ]);
 
-        $spm = $this->findPlaylistMedia($playlist, $media);
-        $I->assertFalse($spm->is_queued);
-        $I->assertGreaterThan(0, $spm->last_played);
+        $I->assertTrue($this->findPlaylistMedia($playlist, $media)->is_queued);
+        $I->assertNotNull($this->em->refetch($playlist)->queue_reset_at);
     }
 
     /**
@@ -47,7 +70,7 @@ final class LiquidsoapFeedbackCest extends CestAbstract
         $I->wantTo('Leave playlist media untouched when Liquidsoap reports a track that has a queue row.');
 
         $playlist = $this->seedPlaylist();
-        $media = $this->addMedia($playlist);
+        $media = $this->addMedia($playlist, 'cued.mp3');
 
         $spm = $this->findPlaylistMedia($playlist, $media);
         $spm->played(self::CUED_AT);
@@ -87,9 +110,9 @@ final class LiquidsoapFeedbackCest extends CestAbstract
         return $playlist;
     }
 
-    private function addMedia(StationPlaylist $playlist): StationMedia
+    private function addMedia(StationPlaylist $playlist, string $path): StationMedia
     {
-        $media = $this->uploadTestSong();
+        $media = $this->uploadTestSong($path);
 
         $this->di->get(StationPlaylistMediaRepository::class)->addMediaToPlaylist($media, $playlist);
         $this->em->flush();
