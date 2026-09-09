@@ -7,9 +7,9 @@ namespace App\Radio\AutoDJ;
 use App\Cache\QueueLogCache;
 use App\Container\EntityManagerAwareTrait;
 use App\Container\LoggerAwareTrait;
+use App\Entity\Repository\StationPlaylistMediaRepository;
 use App\Entity\Repository\StationQueueRepository;
 use App\Entity\Station;
-use App\Entity\StationPlaylistMedia;
 use App\Entity\StationQueue;
 use App\Event\Radio\BuildQueue;
 use App\Utilities\Time;
@@ -31,6 +31,7 @@ final class Queue
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
         private readonly StationQueueRepository $queueRepo,
+        private readonly StationPlaylistMediaRepository $spmRepo,
         private readonly Scheduler $scheduler,
         private readonly QueueLogCache $queueLogCache
     ) {
@@ -279,10 +280,9 @@ final class Queue
             return;
         }
 
-        $spm = $this->em->getRepository(StationPlaylistMedia::class)
-            ->findOneBy(['playlist' => $playlist, 'media' => $media]);
+        $spm = $this->spmRepo->findByPlaylistAndMedia($playlist, $media);
 
-        if ($spm instanceof StationPlaylistMedia) {
+        if ($spm !== null) {
             $spm->is_queued = true;
             $this->em->persist($spm);
         }

@@ -429,6 +429,14 @@ final class StationPlaylistMediaRepository extends Repository
         return $notQueuedMediaCount === $totalMediaCount;
     }
 
+    public function findByPlaylistAndMedia(StationPlaylist $playlist, StationMedia $media): ?StationPlaylistMedia
+    {
+        return $this->em->getRepository(StationPlaylistMedia::class)->findOneBy([
+            'playlist' => $playlist,
+            'media' => $media,
+        ]);
+    }
+
     public function isMediaInPlaylist(StationMedia $media, StationPlaylist $playlist): bool
     {
         if ($playlist->source === PlaylistSources::Songs) {
