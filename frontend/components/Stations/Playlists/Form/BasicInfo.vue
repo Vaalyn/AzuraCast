@@ -378,6 +378,7 @@ import FormGroupField from "~/components/Form/FormGroupField.vue";
 import FormGroupMultiCheck from "~/components/Form/FormGroupMultiCheck.vue";
 import FormGroupSelect from "~/components/Form/FormGroupSelect.vue";
 import { useStationsPlaylistsForm } from "~/components/Stations/Playlists/Form/form.ts";
+import { usePlaylistOptions } from "~/components/Stations/Playlists/playlistOptions.ts";
 import { useFormTabClass } from "~/functions/useFormTabClass.ts";
 import { useTranslate } from "~/vendor/gettext";
 
@@ -387,90 +388,7 @@ const tabClass = useFormTabClass(computed(() => r$.value.$groups.basicInfoTab));
 
 const { $gettext } = useTranslate();
 
-const sourceOptions = [
-    {
-        value: "songs",
-        text: $gettext("Song-Based"),
-        description: $gettext(
-            "A playlist containing media files hosted on this server.",
-        ),
-    },
-    {
-        value: "playlists",
-        text: $gettext("Playlist Group"),
-        description: $gettext("A playlist containing other playlists."),
-    },
-    {
-        value: "remote_url",
-        text: $gettext("Remote URL"),
-        description: $gettext(
-            "A playlist that instructs the station to play from a remote URL.",
-        ),
-    },
-    {
-        value: "requests",
-        text: $gettext("Request Queue"),
-        description: $gettext(
-            "A playlist that plays songs requested by listeners.",
-        ),
-    },
-];
-
-const typeOptions = [
-    {
-        value: "default",
-        text: $gettext("General Rotation"),
-        description: $gettext(
-            "Standard playlist, shuffles with other standard playlists based on weight.",
-        ),
-    },
-    {
-        value: "once_per_x_songs",
-        text: $gettext("Once per x Songs"),
-        description: $gettext("Play once every $x songs."),
-    },
-    {
-        value: "once_per_x_minutes",
-        text: $gettext("Once per x Minutes"),
-        description: $gettext("Play once every $x minutes."),
-    },
-    {
-        value: "once_per_hour",
-        text: $gettext("Once per Hour"),
-        description: $gettext("Play once per hour at the specified minute."),
-    },
-    {
-        value: "custom",
-        text: $gettext("Advanced"),
-        description: $gettext(
-            "Manually define how this playlist is used in Liquidsoap configuration.",
-        ),
-    },
-];
-
-const orderOptions = [
-    {
-        value: "shuffle",
-        text: $gettext("Shuffled"),
-        description: $gettext(
-            "The full playlist is shuffled and then played through in the shuffled order.",
-        ),
-    },
-    {
-        value: "random",
-        text: $gettext("Random"),
-        description: $gettext(
-            "A completely random track is picked for playback every time the queue is populated.",
-        ),
-    },
-    {
-        value: "sequential",
-        text: $gettext("Sequential"),
-        description: $gettext(
-            "The order of the playlist is manually specified and followed by the AutoDJ.",
-        ),
-    },
-];
+const { sourceOptions, typeOptions, orderOptions } = usePlaylistOptions();
 
 const remoteTypeOptions = [
     {
