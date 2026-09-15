@@ -3901,6 +3901,24 @@ paths:
       parameters:
         -
           $ref: '#/components/parameters/StationIdRequired'
+        -
+          name: 'filter[source]'
+          in: query
+          description: 'Filter by playlist source. Repeat as filter[source][] to match several values.'
+          schema:
+            $ref: '#/components/schemas/PlaylistSources'
+        -
+          name: 'filter[type]'
+          in: query
+          description: 'Filter by playlist type. Repeat as filter[type][] to match several values.'
+          schema:
+            $ref: '#/components/schemas/PlaylistTypes'
+        -
+          name: 'filter[order]'
+          in: query
+          description: 'Filter by playback order. Repeat as filter[order][] to match several values.'
+          schema:
+            $ref: '#/components/schemas/PlaylistOrders'
       responses:
         '200':
           description: Success
