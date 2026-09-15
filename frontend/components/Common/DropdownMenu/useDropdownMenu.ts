@@ -4,6 +4,7 @@ import createRequiredInjectionState from "~/functions/createRequiredInjectionSta
 
 export enum MenuItemType {
     Action = "action",
+    Checkbox = "checkbox",
     Submenu = "submenu",
     Input = "input",
     Separator = "separator",
@@ -19,6 +20,14 @@ export interface MenuActionItem extends MenuItemBase {
     icon?: () => Component;
     checked?: boolean;
     onSelect: () => void;
+}
+
+export interface MenuCheckboxItem extends MenuItemBase {
+    type: MenuItemType.Checkbox;
+    label: string;
+    icon?: () => Component;
+    checked: boolean;
+    onToggle: () => void;
 }
 
 export interface MenuSubmenuItem extends MenuItemBase {
@@ -43,6 +52,7 @@ export interface MenuSeparatorItem extends MenuItemBase {
 
 export type MenuItem =
     | MenuActionItem
+    | MenuCheckboxItem
     | MenuSubmenuItem
     | MenuInputItem
     | MenuSeparatorItem;

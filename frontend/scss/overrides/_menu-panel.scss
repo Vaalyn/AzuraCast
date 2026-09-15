@@ -32,6 +32,20 @@
     margin-left: auto;
   }
 
+  .menu-item-checkbox {
+    margin-bottom: 0;
+    cursor: pointer;
+
+    &:focus-within {
+      color: var(--bs-dropdown-link-hover-color);
+      background-color: var(--bs-dropdown-link-hover-bg);
+    }
+
+    .form-check-input {
+      margin-left: 0;
+    }
+  }
+
   .menu-input {
     padding: .25rem var(--bs-dropdown-item-padding-x);
   }

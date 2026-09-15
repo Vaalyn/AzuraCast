@@ -474,18 +474,21 @@ const filters: DataTableFilter[] = [
         label: $gettext("Source"),
         type: DataTableFilterType.Select,
         options: sourceOptions,
+        multiple: true,
     },
     {
         key: "type",
         label: $gettext("Playlist Type"),
         type: DataTableFilterType.Select,
         options: typeOptions,
+        multiple: true,
     },
     {
         key: "order",
         label: $gettext("Song Playback Order"),
         type: DataTableFilterType.Select,
         options: orderOptions,
+        multiple: true,
     },
 ];
 

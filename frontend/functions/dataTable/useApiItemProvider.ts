@@ -8,7 +8,6 @@ import {
     useQueryClient,
 } from "@tanstack/vue-query";
 import { AxiosRequestConfig } from "axios";
-import { isEmpty } from "es-toolkit/compat";
 import { computed, MaybeRef, ref, shallowRef, toValue } from "vue";
 import {
     DATATABLE_DEFAULT_CONTEXT,
@@ -86,9 +85,11 @@ export function useApiItemProvider<Row extends DataTableRow = DataTableRow>(
             queryParams.searchPhrase = context.value.searchPhrase;
         }
 
-        if (!isEmpty(context.value.filters)) {
-            queryParams.filter = context.value.filters;
-        }
+        Object.entries(context.value.filters).forEach(
+            ([filterKey, filterValue]) => {
+                queryParams[`filter[${filterKey}]`] = filterValue;
+            },
+        );
 
         if (null !== context.value.sortField) {
             queryParams.sort = context.value.sortField;

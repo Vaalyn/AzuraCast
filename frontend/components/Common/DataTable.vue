@@ -314,6 +314,7 @@ import { type Component, computed, ref, shallowRef, toRaw, watch } from "vue";
 import DropdownMenu from "~/components/Common/DropdownMenu/DropdownMenu.vue";
 import {
     MenuActionItem,
+    MenuCheckboxItem,
     MenuItem,
     MenuItemType,
 } from "~/components/Common/DropdownMenu/useDropdownMenu.ts";
@@ -325,6 +326,7 @@ import {
     DATATABLE_DEFAULT_CONTEXT,
     DataTableFilterContext,
     DataTableFilterType,
+    DataTableFilterValue,
     DataTableItemProvider,
     DataTableRow,
 } from "~/functions/useHasDatatable.ts";
@@ -358,19 +360,22 @@ export interface DataTableFilterOption {
     icon?: () => Component;
 }
 
-export type DataTableFilter =
-    | {
-          key: string;
-          label: string;
-          type: DataTableFilterType.Select;
-          options: DataTableFilterOption[];
-      }
-    | {
-          key: string;
-          label: string;
-          type: DataTableFilterType.Text;
-          placeholder?: string;
-      };
+export interface DataTableSelectFilter {
+    key: string;
+    label: string;
+    type: DataTableFilterType.Select;
+    options: DataTableFilterOption[];
+    multiple?: boolean;
+}
+
+export interface DataTableTextFilter {
+    key: string;
+    label: string;
+    type: DataTableFilterType.Text;
+    placeholder?: string;
+}
+
+export type DataTableFilter = DataTableSelectFilter | DataTableTextFilter;
 
 export interface DataTableProps<Row extends DataTableRow = DataTableRow> {
     id?: string;
@@ -440,7 +445,7 @@ watch(selectedRows, (newRows: Row[]) => {
 const searchPhrase = ref<string>(DATATABLE_DEFAULT_CONTEXT.searchPhrase);
 const currentPage = ref<number>(DATATABLE_DEFAULT_CONTEXT.currentPage);
 
-const activeFilters = ref<Record<string, string>>({});
+const activeFilters = ref<Record<string, DataTableFilterValue>>({});
 
 const activeFilterCount = computed<number>(() => {
     return Object.keys(activeFilters.value).length;
@@ -458,6 +463,50 @@ const applyFilter = (key: string, value: string) => {
     activeFilters.value = updatedFilters;
 };
 
+const isFilterValueActive = (key: string, value: string): boolean => {
+    const currentValue = activeFilters.value[key];
+
+    if (currentValue === undefined) {
+        return false;
+    }
+
+    if (isString(currentValue)) {
+        return currentValue === value;
+    }
+
+    return currentValue.includes(value);
+};
+
+const toggleFilterValue = (filter: DataTableSelectFilter, value: string) => {
+    const currentValue = activeFilters.value[filter.key];
+    const currentValues = Array.isArray(currentValue) ? currentValue : [];
+
+    const toggledValues = currentValues.includes(value)
+        ? currentValues.filter((selectedValue) => {
+              return selectedValue !== value;
+          })
+        : [...currentValues, value];
+
+    // Kept in option order so equal selections share one query cache entry
+    const selectedValues = filter.options
+        .map((option) => {
+            return option.value;
+        })
+        .filter((optionValue) => {
+            return toggledValues.includes(optionValue);
+        });
+
+    const updatedFilters = { ...activeFilters.value };
+
+    if (selectedValues.length === 0) {
+        delete updatedFilters[filter.key];
+    } else {
+        updatedFilters[filter.key] = selectedValues;
+    }
+
+    activeFilters.value = updatedFilters;
+};
+
 const clearFilters = () => {
     activeFilters.value = {};
 };
@@ -467,23 +516,46 @@ const { $gettext } = useTranslate();
 const filterMenuItems = computed<MenuItem[]>(() => {
     const items = props.filters.map((filter): MenuItem => {
         if (filter.type === DataTableFilterType.Text) {
+            const currentValue = activeFilters.value[filter.key];
+
             return {
                 type: MenuItemType.Submenu,
                 key: filter.key,
                 label: filter.label,
-                indicator: activeFilters.value[filter.key] !== undefined,
+                indicator: currentValue !== undefined,
                 items: [
                     {
                         type: MenuItemType.Input,
                         key: `${filter.key}:input`,
                         label: filter.label,
                         placeholder: filter.placeholder,
-                        value: activeFilters.value[filter.key] ?? "",
+                        value: isString(currentValue) ? currentValue : "",
                         onSelect: (value) => {
                             applyFilter(filter.key, value);
                         },
                     },
                 ],
+            };
+        }
+
+        if (filter.multiple) {
+            return {
+                type: MenuItemType.Submenu,
+                key: filter.key,
+                label: filter.label,
+                indicator: activeFilters.value[filter.key] !== undefined,
+                items: filter.options.map((option): MenuCheckboxItem => {
+                    return {
+                        type: MenuItemType.Checkbox,
+                        key: `${filter.key}:${option.value}`,
+                        label: option.text,
+                        icon: option.icon,
+                        checked: isFilterValueActive(filter.key, option.value),
+                        onToggle: () => {
+                            toggleFilterValue(filter, option.value);
+                        },
+                    };
+                }),
             };
         }
 
@@ -498,7 +570,7 @@ const filterMenuItems = computed<MenuItem[]>(() => {
                     key: `${filter.key}:${option.value}`,
                     label: option.text,
                     icon: option.icon,
-                    checked: activeFilters.value[filter.key] === option.value,
+                    checked: isFilterValueActive(filter.key, option.value),
                     onSelect: () => {
                         applyFilter(filter.key, option.value);
                     },

@@ -12,6 +12,8 @@ export enum DataTableFilterType {
     Text = "text",
 }
 
+export type DataTableFilterValue = string | string[];
+
 export type DataTableFilterContext = {
     searchPhrase: string;
     currentPage: number;
@@ -19,7 +21,7 @@ export type DataTableFilterContext = {
     sortOrder: string | null;
     paginated: boolean;
     perPage: number;
-    filters: Record<string, string>;
+    filters: Record<string, DataTableFilterValue>;
 };
 
 export const DATATABLE_DEFAULT_CONTEXT: DataTableFilterContext = {

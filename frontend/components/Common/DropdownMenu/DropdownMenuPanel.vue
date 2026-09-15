@@ -71,6 +71,30 @@
                 </li>
 
                 <li
+                    v-else-if="item.type === MenuItemType.Checkbox"
+                    role="none"
+                    @pointerenter="onItemEnter(item, $event)"
+                >
+                    <label class="dropdown-item menu-item-checkbox form-check">
+                        <form-checkbox
+                            :ref="(el) => setItemElement(item.key, el)"
+                            role="menuitemcheckbox"
+                            :model-value="item.checked"
+                            :tabindex="tabindexFor(item)"
+                            @update:model-value="onCheckboxClick(item)"
+                            @keydown.enter.prevent="onCheckboxClick(item)"
+                            @focus="onItemFocus(item)"
+                        />
+                        <component
+                            :is="item.icon()"
+                            v-if="item.icon"
+                            class="sm ms-1"
+                        />
+                        <span class="menu-item-label">{{ item.label }}</span>
+                    </label>
+                </li>
+
+                <li
                     v-else
                     role="none"
                     @pointerenter="onItemEnter(item, $event)"
@@ -123,12 +147,14 @@ import DropdownMenuInput from "~/components/Common/DropdownMenu/DropdownMenuInpu
 import {
     InteractionMode,
     MenuActionItem,
+    MenuCheckboxItem,
     MenuItem,
     MenuItemType,
     MenuSubmenuItem,
     PointerType,
     useDropdownMenu,
 } from "~/components/Common/DropdownMenu/useDropdownMenu.ts";
+import FormCheckbox from "~/components/Form/FormCheckbox.vue";
 import IconIcChevronRight from "~icons/ic/baseline-chevron-right";
 
 const props = defineProps<{
@@ -389,6 +415,10 @@ const onSubmenuClick = (item: MenuSubmenuItem, event: MouseEvent) => {
 const onActionClick = (item: MenuActionItem) => {
     item.onSelect();
     menuState.closeAll();
+};
+
+const onCheckboxClick = (item: MenuCheckboxItem) => {
+    item.onToggle();
 };
 
 let popper: Instance | null = null;
