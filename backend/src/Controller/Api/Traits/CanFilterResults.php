@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Api\Traits;
 
+use App\Enums\ListFilterMode;
 use App\Exception\ValidationException;
 use App\Http\ServerRequest;
 use App\Utilities\ListFilter;
@@ -13,9 +14,9 @@ use Doctrine\ORM\QueryBuilder;
 trait CanFilterResults
 {
     /**
-     * Apply "=" or "IN" conditions from a filter[key]=value query parameter.
+     * Apply conditions from a filter[key]=value query parameter.
      * - Keys not in the lookup are ignored
-     * - Values outside allowed values throw a 400 error
+     * - Values outside an enum filter's allowed values throw a 400 error
      *
      * @param array<string, ListFilter> $filterLookup
      */
@@ -33,20 +34,57 @@ trait CanFilterResults
                 continue;
             }
 
-            $parameter = "filter_{$key}";
-            $isSingleValue = count($values) === 1;
-
-            $queryBuilder->andWhere(
-                $isSingleValue
-                    ? "{$filter->field} = :{$parameter}"
-                    : "{$filter->field} IN (:{$parameter})"
-            )->setParameter(
-                $parameter,
-                $isSingleValue ? $values[0] : $values
-            );
+            $queryBuilder = match ($filter->mode) {
+                ListFilterMode::Equals => self::applyEqualsFilter($queryBuilder, $key, $filter, $values),
+                ListFilterMode::Contains => self::applyContainsFilter($queryBuilder, $key, $filter, $values),
+            };
         }
 
         return $queryBuilder;
+    }
+
+    /**
+     * @param list<string> $values
+     */
+    private static function applyEqualsFilter(
+        QueryBuilder $queryBuilder,
+        string $key,
+        ListFilter $filter,
+        array $values
+    ): QueryBuilder {
+        $parameter = "filter_{$key}";
+        $isSingleValue = count($values) === 1;
+
+        return $queryBuilder->andWhere(
+            $isSingleValue
+                ? "{$filter->field} = :{$parameter}"
+                : "{$filter->field} IN (:{$parameter})"
+        )->setParameter(
+            $parameter,
+            $isSingleValue ? $values[0] : $values
+        );
+    }
+
+    /**
+     * @param list<string> $values
+     */
+    private static function applyContainsFilter(
+        QueryBuilder $queryBuilder,
+        string $key,
+        ListFilter $filter,
+        array $values
+    ): QueryBuilder {
+        $conditions = [];
+
+        foreach ($values as $index => $value) {
+            $parameter = "filter_{$key}_{$index}";
+            $conditions[] = "{$filter->field} LIKE :{$parameter}";
+            $queryBuilder->setParameter($parameter, "%{$value}%");
+        }
+
+        $condition = implode(' OR ', $conditions);
+
+        return $queryBuilder->andWhere("({$condition})");
     }
 
     /**
@@ -78,7 +116,8 @@ trait CanFilterResults
                 continue;
             }
 
-            if (!in_array($value, $filter->allowedValues, true)) {
+            $allowedValues = $filter->allowedValues;
+            if ($allowedValues !== null && !in_array($value, $allowedValues, true)) {
                 throw self::invalidFilterValue($key, $value, $filter);
             }
 
@@ -93,12 +132,20 @@ trait CanFilterResults
         string $value,
         ListFilter $filter
     ): ValidationException {
+        $allowedValues = $filter->allowedValues;
+
+        if ($allowedValues === null) {
+            return new ValidationException(
+                sprintf(__('Invalid value "%s" for filter "%s".'), $value, $key)
+            );
+        }
+
         return new ValidationException(
             sprintf(
                 __('Invalid value "%s" for filter "%s". Allowed values: %s'),
                 $value,
                 $key,
-                implode(', ', $filter->allowedValues)
+                implode(', ', $allowedValues)
             )
         );
     }

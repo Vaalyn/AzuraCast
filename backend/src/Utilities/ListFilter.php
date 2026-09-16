@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace App\Utilities;
 
+use App\Enums\ListFilterMode;
 use BackedEnum;
 
 /**
- * A filterable list field with its allowed values
+ * A filterable list field and its allowed values & matching mode
  */
 final readonly class ListFilter
 {
     /**
-     * @param list<string> $allowedValues
+     * @param ?list<string> $allowedValues
      */
-    public function __construct(
+    private function __construct(
         public string $field,
-        public array $allowedValues
+        public ListFilterMode $mode,
+        public ?array $allowedValues = null
     ) {
     }
 
@@ -30,6 +32,11 @@ final readonly class ListFilter
             $values[] = (string) $case->value;
         }
 
-        return new self($field, $values);
+        return new self($field, ListFilterMode::Equals, $values);
+    }
+
+    public static function contains(string $field): self
+    {
+        return new self($field, ListFilterMode::Contains);
     }
 }
