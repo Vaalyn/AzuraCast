@@ -224,6 +224,9 @@ Unless noted, every item below behaves identically in-memory and in integration.
     matching
     - Per-entry `is_visible` and `playlist_ref` drive the OncePerXSongs visibility window
     - Integration also mirrors `queue_history` into `SongHistory`, since the real recently-played check reads that table
+  - A playlist group's OncePerXSongs window counts plays of its members at any nesting depth
+    - Queue rows record the member and never the group
+    - A member that also plays standalone counts against its group's window
 - **Requests**
   - Each `runtime.requests` entry becomes a real request that drives the request-playback path:
     - The global request queue and the `Requests`-source playlist

@@ -354,7 +354,10 @@ final class InMemoryAutoDjDataProxy
             return false;
         }
 
-        $ref = $this->entities->refForPlaylist($playlist);
+        $refs = $this->playlistAndNestedMemberRefs($playlist);
+        if ($refs === []) {
+            return false;
+        }
 
         $rows = [
             ...array_reverse($this->cuedEntries),
@@ -363,17 +366,16 @@ final class InMemoryAutoDjDataProxy
 
         $candidates = array_values(array_filter(
             $rows,
-            static fn(array $entry): bool => $entry['is_visible'] || $entry['playlist_ref'] === $ref
+            static fn(array $entry): bool => (
+                $entry['is_visible']
+                || in_array($entry['playlist_ref'], $refs, true)
+            )
         ));
 
         $candidates = array_slice($candidates, 0, $playPerSongs);
 
         foreach ($candidates as $entry) {
-            if ($ref === null) {
-                continue;
-            }
-
-            if ($entry['playlist_ref'] === $ref) {
+            if (in_array($entry['playlist_ref'], $refs, true)) {
                 return true;
             }
         }
@@ -467,6 +469,40 @@ final class InMemoryAutoDjDataProxy
         }
 
         return false;
+    }
+
+    /**
+     * @param int[] $visitedIds
+     *
+     * @return string[]
+     */
+    private function playlistAndNestedMemberRefs(StationPlaylist $playlist, array $visitedIds = []): array
+    {
+        if (in_array($playlist->id, $visitedIds, true)) {
+            return [];
+        }
+
+        $visitedIds[] = $playlist->id;
+
+        $refs = [];
+
+        $ref = $this->entities->refForPlaylist($playlist);
+        if ($ref !== null) {
+            $refs[] = $ref;
+        }
+
+        if ($playlist->source !== PlaylistSources::Playlists) {
+            return $refs;
+        }
+
+        foreach ($playlist->playlists as $membership) {
+            $refs = [
+                ...$refs,
+                ...$this->playlistAndNestedMemberRefs($membership->playlist, $visitedIds),
+            ];
+        }
+
+        return array_values(array_unique($refs));
     }
 
     private function toPlaylistQueue(StationPlaylistMedia $spm): StationPlaylistQueue
