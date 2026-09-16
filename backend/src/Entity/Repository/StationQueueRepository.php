@@ -22,6 +22,11 @@ final class StationQueueRepository extends AbstractStationBasedRepository
 {
     protected string $entityClass = StationQueue::class;
 
+    public function __construct(
+        private readonly StationPlaylistRepository $spRepo
+    ) {
+    }
+
     public function clearForMediaAndPlaylist(
         StationMedia $media,
         StationPlaylist $playlist
@@ -96,21 +101,27 @@ final class StationQueueRepository extends AbstractStationBasedRepository
     ): bool {
         $playPerSongs ??= $playlist->play_per_songs;
 
+        $playlistIds = $this->spRepo->getPlaylistAndNestedMemberIds($playlist);
+
         $recentPlayedQuery = $this->em->createQuery(
             <<<'DQL'
                 SELECT IDENTITY(sq.playlist) AS playlist_id
                 FROM App\Entity\StationQueue sq
                 WHERE sq.station = :station
-                AND (sq.playlist = :playlist OR sq.is_visible = 1)
+                AND (IDENTITY(sq.playlist) IN (:playlistIds) OR sq.is_visible = 1)
                 ORDER BY sq.id DESC
             DQL
         )->setParameters([
             'station' => $playlist->station,
-            'playlist' => $playlist,
+            'playlistIds' => $playlistIds,
         ])->setMaxResults($playPerSongs);
 
-        $recentPlayedPlaylists = $recentPlayedQuery->getSingleColumnResult();
-        return in_array($playlist->id, (array)$recentPlayedPlaylists, true);
+        $recentPlayedPlaylistIds = array_map(
+            'intval',
+            $recentPlayedQuery->getSingleColumnResult()
+        );
+
+        return array_intersect($playlistIds, $recentPlayedPlaylistIds) !== [];
     }
 
     /**
