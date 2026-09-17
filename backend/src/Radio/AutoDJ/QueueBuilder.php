@@ -277,19 +277,39 @@ final class QueueBuilder implements EventSubscriberInterface
                 return $blockEntries;
             }
         } else {
-            foreach ($this->getPlaylistGroupQueueForOrder($playlistGroup) as $selectedStationPlaylistGroup) {
-                $memberEntries = $this->playGroupMember(
+            $passEntries = $this->playPassOfPlaylistGroup(
+                $event,
+                $playlistGroup,
+                $recentSongHistory,
+                $allowDuplicates,
+                $memberAvoidsDuplicates,
+                $playlistChain
+            );
+
+            if (!empty($passEntries)) {
+                return $passEntries;
+            }
+
+            $isScheduledToLoopOnce = $this->scheduler->isPlaylistScheduledToLoopOnceAt(
+                $playlistGroup,
+                $event->getExpectedPlayTime()
+            );
+
+            // Do another pass so a cycle ending in schedule skip does not hand this slot to general rotation
+            if ($passEntries === null && !$isScheduledToLoopOnce) {
+                $this->spRepo->resetPlaylistGroupQueue($playlistGroup);
+
+                $passEntries = $this->playPassOfPlaylistGroup(
                     $event,
                     $playlistGroup,
-                    $selectedStationPlaylistGroup,
                     $recentSongHistory,
                     $allowDuplicates,
                     $memberAvoidsDuplicates,
                     $playlistChain
                 );
 
-                if ($memberEntries !== []) {
-                    return $memberEntries;
+                if (!empty($passEntries)) {
+                    return $passEntries;
                 }
             }
         }
@@ -307,12 +327,56 @@ final class QueueBuilder implements EventSubscriberInterface
     }
 
     /**
+     * Run one pass over the group's remaining member queue and return the first member's track(s)
+     *
+     * @param mixed[] $recentSongHistory
+     * @param list<StationPlaylist> $playlistChain Group chain up to and including this group
+     *
+     * @return ?list<StationQueue> Null if skipped by its own schedule, empty if no track was found
+     */
+    private function playPassOfPlaylistGroup(
+        BuildQueue $event,
+        StationPlaylist $playlistGroup,
+        array $recentSongHistory,
+        bool $allowDuplicates,
+        bool $memberAvoidsDuplicates,
+        array $playlistChain
+    ): ?array {
+        $groupQueue = $this->getPlaylistGroupQueueForOrder($playlistGroup);
+        $isFreshCycle = $this->spRepo->isPlaylistGroupQueueCompletelyFilled($playlistGroup);
+        $sawScheduleSkip = false;
+
+        foreach ($groupQueue as $selectedStationPlaylistGroup) {
+            $memberEntries = $this->playGroupMember(
+                $event,
+                $playlistGroup,
+                $selectedStationPlaylistGroup,
+                $recentSongHistory,
+                $allowDuplicates,
+                $memberAvoidsDuplicates,
+                $playlistChain
+            );
+
+            if (null === $memberEntries) {
+                $sawScheduleSkip = true;
+                continue;
+            }
+
+            if ($memberEntries !== []) {
+                return $memberEntries;
+            }
+        }
+
+        return ($sawScheduleSkip && !$isFreshCycle) ? null : [];
+    }
+
+    /**
      * Try to play the given group member and update its rotation state.
      *
      * @param mixed[] $recentSongHistory
      * @param list<StationPlaylist> $playlistChain Group chain up to and including this group
      *
-     * @return list<StationQueue> Empty if the member was skipped or did not return a track
+     * @return ?list<StationQueue> Null if skipped by its own schedule, empty if no track was found
      */
     private function playGroupMember(
         BuildQueue $event,
@@ -322,7 +386,7 @@ final class QueueBuilder implements EventSubscriberInterface
         bool $allowDuplicates,
         bool $memberAvoidsDuplicates,
         array $playlistChain
-    ): array {
+    ): ?array {
         $expectedPlayTime = $event->getExpectedPlayTime();
         $selectedPlaylist = $selectedStationPlaylistGroup->playlist;
 
@@ -334,7 +398,7 @@ final class QueueBuilder implements EventSubscriberInterface
 
             $this->em->persist($selectedStationPlaylistGroup);
 
-            return [];
+            return null;
         }
 
         $isFullCycleMember = $selectedStationPlaylistGroup->play_full_cycle
@@ -453,7 +517,7 @@ final class QueueBuilder implements EventSubscriberInterface
                 $playlistChain
             );
 
-            if ($memberEntries !== []) {
+            if (!empty($memberEntries)) {
                 $blockEntries = [
                     ...$blockEntries,
                     ...$memberEntries,
