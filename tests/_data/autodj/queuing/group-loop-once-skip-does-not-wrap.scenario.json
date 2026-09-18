@@ -1,6 +1,7 @@
 {
-  "description": "A loop_once group whose last queued member is outside its own schedule window does not wrap into a second cycle. The group contributes exactly one track and the build then falls back to the unscheduled 'fill' playlist, instead of the cycle wrap replaying the first member. Integration only: the in-memory harness applies member state immediately, so its allowDuplicates retry pass reaches the unconditional empty-queue reset in getPlaylistGroupQueueForOrder and wraps regardless.",
+  "description": "A loop_once group whose last queued member is outside its own schedule window does not wrap into a second cycle. The group contributes exactly one track and the build then falls back to the unscheduled 'fill' playlist, instead of the cycle wrap replaying the first member.",
   "modes": [
+    "in_memory",
     "integration"
   ],
   "cases": [

@@ -1,5 +1,5 @@
 {
-  "description": "A sequential group whose last queued member is outside its own schedule window wraps into its next cycle within the same pick, instead of handing that slot to the general rotation. The group is scheduled and 'fill' is not, so 'fill' can only be selected if the group returns nothing; it must never appear while the group still has eligible members.",
+  "description": "A sequential group whose last queued member is outside its own schedule window wraps into its next cycle within the same pick, instead of handing that slot to the general rotation. The group is scheduled and 'fill' is not, so 'fill' can only be selected if the group returns nothing; it must never appear while the group still has eligible members. The wrap is the only way to reach this result: the retry pass sees the group queue as it was last committed and skips the same member again.",
   "modes": [
     "in_memory",
     "integration"

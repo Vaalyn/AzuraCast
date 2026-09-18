@@ -19,6 +19,9 @@ The **same** fixtures are executed by two harnesses, both using the real (not mo
   - Fast, no database involved
   - Hydrates an in-memory entity store from the dumped data
   - Runs against fake repositories that emulate the repositories behaviour
+  - Defers writes like Doctrine so picks only become visible to the fake queries after a flush
+  - Fake queue resets follow repository methods exactly
+    - Resync after the bulk write works by refreshing the live entities from the committed rows
 - **Integration** (`tests/Functional/AutoDjIntegrationCest.php`)
   - Authoritative tests against the database
   - Imports the dump into a test station
@@ -199,6 +202,13 @@ Unless noted, every item below behaves identically in-memory and in integration.
     - per-media `is_queued` / `last_played`
     - group-member `is_queued` / `consecutive_plays_count` / `last_played`
     - cued media, queue history & requests
+- **Deferred writes**
+  - A build's state changes are committed after the build, so queries inside it see the state as of the last commit
+  - Commit points: after each build, after each slot of a merged group block, inside every queue reset
+  - A queue reset rewrites the committed rows and refreshes the entities from them, dropping any pending change on those rows
+  - A column is deferred when production reads it through SQL (a `WHERE`, an `ORDER BY` or a scalar projection), and stays live when production reads it off a managed entity
+  - Limitation: the in-memory flush writes every tracked column, Doctrine only the changed ones
+    - The two agree because every bulk write is followed by a resync, in-memory as in production
 - **Station-level dump fields**
   - `station.timezone` (schedule windows evaluate in station-local time)
   - `station.requests_only_via_playlists`

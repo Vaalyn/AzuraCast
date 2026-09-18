@@ -89,8 +89,16 @@ final class InMemoryAutoDjHarnessFactory
     private function fakeEntityManager(InMemoryAutoDjDataProxy $dataProxy): ReloadableEntityManagerInterface
     {
         $entityManager = Mockery::mock(ReloadableEntityManagerInterface::class);
-        $entityManager->allows('persist');
-        $entityManager->allows('flush');
+        $entityManager->allows('persist')->andReturnUsing(
+            static function (object $entity) use ($dataProxy): void {
+                $dataProxy->persist($entity);
+            }
+        );
+        $entityManager->allows('flush')->andReturnUsing(
+            static function () use ($dataProxy): void {
+                $dataProxy->flush();
+            }
+        );
         $entityManager->allows('remove');
         $entityManager->allows('refetch')->andReturnUsing(static fn(object $entity): object => $entity);
         $entityManager->allows('find')->andReturnUsing(

@@ -65,12 +65,8 @@ final readonly class InMemoryAutoDjHarness
             $this->queueBuilder->calculateNextSong($event);
         }
 
-        $nextSongs = $event->getNextSongs();
+        $this->dataProxy->flush();
 
-        foreach ($nextSongs as $stationQueueEntry) {
-            $this->dataProxy->recordBuiltEntry($stationQueueEntry);
-        }
-
-        return $nextSongs;
+        return $event->getNextSongs();
     }
 }
